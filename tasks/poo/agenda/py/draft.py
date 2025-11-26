@@ -67,7 +67,11 @@ class Agenda:
     return self.__contacts[index]
   
   def addContact(self, name: str, phones: list[Phone]):
-    if self.findPosByName(name) != -1:
+    contactIndex = self.findPosByName(name)
+    if contactIndex != -1:
+      contact = self.__contacts[contactIndex]
+      for phone in phones:
+        contact.addPhone(phone)
       return
     
     contact = Contact(name)
@@ -80,10 +84,30 @@ class Agenda:
     if index != -1:
       self.__contacts.pop(index)
 
+  def search(self, pattern: str) -> list[Contact]:
+    result = []
+    for contact in self.getContacts():
+      if pattern in str(contact):
+        result.append("- "+ str(contact))
+    return "\n".join(result)
+  
+  def getFavorited(self) -> list[Contact]:
+    result = []
+    for contact in self.getContacts():
+      if contact.isFavorited():
+        result.append(contact)
+    return result
+  
+  def favoriteContact(self, name: str):
+    contact = self.getContact(name)
+    if contact is not None:
+      contact.toggleFavorited()
+
   def __str__(self):
     result = []
     for contact in self.getContacts():
-      result.append("- " + str(contact))
+      mark = "@ " if contact.isFavorited() else "- "
+      result.append(mark + str(contact))
     return "\n".join(result)
   
 def buildPhoneFromString(phoneStr: str) -> Phone:
@@ -111,6 +135,26 @@ def main():
       print(agenda)
     elif args[0] == "end":
       break
+    elif args[0] == "rmFone":
+      name = args[1]
+      index = int(args[2])
+      contact = agenda.getContact(name)
+      if contact:
+        contact.rmPhone(index)
+      agenda.rmContact(name)
+      agenda.addContact(contact.getName(), contact.getPhones())
+    elif args[0] == "rm":
+      name = args[1]
+      agenda.rmContact(name)
+    elif args[0] == "search":
+      pattern = args[1]
+      print(agenda.search(pattern))
+    elif args[0] == "tfav":
+      name = args[1]
+      agenda.favoriteContact(name)
+    elif args[0] == "favs":
+      favs = agenda.getFavorited()
+      print("\n".join(f"@ {str(fav)}" for fav in favs))
     else:
       print("fail: comando invalido")
 
